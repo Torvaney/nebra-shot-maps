@@ -18,7 +18,7 @@ plot_stars <- function(stars, links) {
 
     geom_path(
       aes(group = group),
-      colour = "#5e5e5e",
+      colour = colours$link,
       lineend = "round",
       size = 0.5
     ) +
