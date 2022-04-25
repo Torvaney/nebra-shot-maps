@@ -9,9 +9,9 @@ plot_shots <- function(data) {
   data %>%
     ggplot(aes(x = x, y = y)) +
     annotate_pitch(
-        colour = "#5e5e5e",
-        fill = "black",
-        goals = goals_strip
+        colour = colours$link,
+        fill   = colours$nightsky,
+        goals  = goals_strip
     ) +
     geom_point(
       shape = 21,
