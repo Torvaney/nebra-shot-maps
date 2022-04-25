@@ -29,9 +29,22 @@ def test_unit_scaling(x):
     assert np.allclose(new_coord, np.asarray([[x], [x]]))
 
 
+def test_apply_transformation():
+    coords = np.asarray([[2, 2, 1, 1],
+                         [2, 1, 2, 1]])
+
+    scaled = geometry.apply_transformation(coords, 0, 0, 0, np.log(3))
+    scaled_target = np.asarray([[3, 3, 0, 0],
+                                [3, 0, 3, 0]])
+    assert np.allclose(scaled, scaled_target)
+
+    scaled = geometry.apply_transformation(coords, 0, 1, 1, np.log(3))
+    assert np.allclose(scaled, scaled_target+1)
+
+
 # Each transformation should be reversible
 
-def apply_transformation_with_reverse(coord, transformation, *args, reverse=lambda x: -x):
+def transformation_with_reverse(coord, transformation, *args, reverse=lambda x: -x):
     forward = transformation(*args)
     backward = transformation(*[reverse(x) for x in args])
 
@@ -43,7 +56,7 @@ def apply_transformation_with_reverse(coord, transformation, *args, reverse=lamb
        st_finite_floats(),
        st_finite_floats())
 def test_translation_is_reversible(coord, dx, dy):
-    assert apply_transformation_with_reverse(coord, geometry.translation, dx, dy)
+    assert transformation_with_reverse(coord, geometry.translation, dx, dy)
 
 
 @given(arrays(float, [2, 10], elements=st_finite_floats(min_value=-1e+5, max_value=1e+5)),
@@ -51,10 +64,10 @@ def test_translation_is_reversible(coord, dx, dy):
 def test_rotation_is_reversible(coord, angle):
     # NOTE: Hypothesis uncovered that at *extremely* large coordinates or number of turns
     #       there are some small errors introduced by this rotation calculation
-    assert apply_transformation_with_reverse(coord, geometry.rotation, angle)
+    assert transformation_with_reverse(coord, geometry.rotation, angle)
 
 
 @given(arrays(float, [2, 10], elements=st_finite_floats()),
        st_finite_floats(min_value=0.000001, exclude_min=True))
 def test_scaling_is_reversible(coord, by):
-    assert apply_transformation_with_reverse(coord, geometry.scaling, by, reverse=lambda x: 1/x)
+    assert transformation_with_reverse(coord, geometry.scaling, by, reverse=lambda x: 1/x)
