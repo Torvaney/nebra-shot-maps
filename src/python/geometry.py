@@ -24,9 +24,12 @@ def apply(coord, *transformations):
     return applied[:2, :]
 
 
-def apply_transformation(coords, angle, dx, dy, log_scale):
-    mid_x = coords[0].mean()
-    mid_y = coords[1].mean()
+def apply_transformation(coords, angle, dx, dy, log_scale, pivot=None):
+    if pivot:
+        mid_x, mid_y = pivot
+    else:
+        mid_x = coords[0].mean()
+        mid_y = coords[1].mean()
     return apply(
         coords,
         translation(-mid_x, -mid_y),  # translate to origin for scaling and rotation

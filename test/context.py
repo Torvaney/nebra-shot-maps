@@ -3,9 +3,7 @@ import sys
 
 # Add src directory to path for tests
 
-src_path = pathlib.Path(__file__).absolute().parents[1]/'src'
+src_path = pathlib.Path(__file__).absolute().parents[1]/'src/python'
 sys.path.insert(0, str(src_path))
 
-from python import (
-    geometry
-)
+import geometry, match_constellation

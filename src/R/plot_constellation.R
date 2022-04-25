@@ -1,19 +1,26 @@
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
+source(here::here("src", "R", "common.R"))
 
-constellation <- "Ori"
-
-stars <- read_csv(here::here("data", "constellations", constellation, "stars.csv"))
-links <- read_csv(here::here("data", "constellations", constellation, "links.csv"))
+constellation <- parse_args()
+stars <- read_csv(here::here("data", "constellations", constellation, "stars_transformed.csv"))
+links <- read_csv(here::here("data", "constellations", constellation, "links_transformed.csv"))
 
 plot_stars <- function(stars, links) {
   links %>%
     mutate(group = cumsum(weight != lag(weight, default = 0))) %>%
     ggplot(aes(x = x, y = y)) +
+
+    # ggsoccer::annotate_pitch(
+    #     colour = "#5e5e5e",
+    #     fill = "black",
+    #     goals = ggsoccer::goals_strip
+    # ) +
+
     geom_path(
-      aes(size = weight, group = group),
-      colour = "#e3e2de",
+      aes(group = group),
+      colour = "#5e5e5e",
       lineend = "round",
-      alpha = 0.2
+      size = 0.5
     ) +
     geom_point(
       aes(size = exp(mag)),
@@ -22,11 +29,8 @@ plot_stars <- function(stars, links) {
       data = stars
     ) +
     scale_size_continuous(limits = c(0, exp(7)), range = c(1, 7)) +
-    theme_void() +
-    theme(
-      panel.background = element_rect(fill = "black"),
-      legend.position = "none"
-    )
+    theme_common()
 }
 
-plot_stars(stars, links)
+plot_stars(stars, links) %>%
+  ggsave(here::here("data", "constellations", constellation, "stars.png"), plot = .)
