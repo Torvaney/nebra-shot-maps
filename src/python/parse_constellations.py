@@ -111,8 +111,6 @@ def wrangle_constellation(constellation_data):
     max_range = max(x_range, y_range)
     target_range = 20
 
-    print(f'Moving {constellation_data["name"].unique()} from {mid_x:.2f} to {target_x}, rescaling by {target_range/max_range:.2f}')
-
     coords_recentered = geometry.apply_transformation(
         coords,
         angle=0,
