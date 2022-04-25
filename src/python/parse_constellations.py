@@ -2,30 +2,35 @@
 Read constellations data (i.e. data/SnT_constellations.txt) and convert it
 into a format we prefer.
 """
-import csv
-import math
 import re
 import sys
+import pathlib
 
 import typer
+import numpy as np
+import pandas as pd
+
+import geometry
 
 
-def main(snt: typer.FileText, names: typer.FileText):
+def main(snt: typer.FileText, names: typer.FileText, output_dir: pathlib.Path):
     # load constellations data and names
-    constellations = list(parse_snt(snt))
+    constellations = pd.DataFrame(parse_snt(snt))
     name_lookup = parse_names(names)
 
     # Join constellations to names & add xy
-    constellations_parsed = [
-        wrangle_constellation(c, name_lookup) for c in constellations
-    ]
+    for constellation_abbr, constellation_data in constellations.groupby('constellation'):
+        full_name = name_lookup[constellation_abbr]
 
-    # write to stdout as csv
-    fields = constellations_parsed[0].keys()
-    writer = csv.DictWriter(sys.stdout, fieldnames=fields)
-    writer.writeheader()
-    for row in constellations_parsed:
-        writer.writerow(row)
+        # Add metadata, add coordinates, separate links and stars
+        constellation_data['name'] = full_name
+        links, stars = wrangle_constellation(constellation_data)
+
+        # Save data
+        constellation_dir = output_dir/constellation_abbr
+        constellation_dir.mkdir(exist_ok=True)
+        links.to_csv(constellation_dir/'links.csv', index=False)
+        stars.to_csv(constellation_dir/'stars.csv', index=False)
 
 
 def parse_snt(lines):
@@ -79,23 +84,56 @@ def parse_names(lines):
     return name_lookup
 
 
-def wrangle_constellation(constellation, name_lookup):
-    wrangled = constellation.copy()
+def wrangle_constellation(constellation_data):
+    wrangled = constellation_data.copy()
 
-    # Add full name of constellation
-    wrangled['name'] = name_lookup[wrangled['constellation']]
+    # Add x,y coordinates using equal-area polar projection
+    ra_degrees = constellation_data['ra']*15
+    xy = [eqpole(ra, dec) for ra, dec in zip(ra_degrees, constellation_data['dec'])]
+    wrangled['raw_x'] = [x['x'] for x in xy]
+    wrangled['raw_y'] = [x['y'] for x in xy]
 
-    # Add "proper" x,y coordinates
-    # NOTE: I don't think this actually works?
-    ra_degrees = constellation['ra']*15
-    xy = eqpole(
-        long=ra_degrees,
-        lat=constellation['dec']
+    # Since we don't actually care about the absolute xy coordinates,
+    # we recenter them to be roughly similar location and scale to shots.
+    # This helps when finding the 'optimal' set of transformations to map a set
+    # of shots to a set of stars
+    coords = wrangled[['raw_x', 'raw_y']].values.transpose()
+
+    # Data for recentering
+    mid_x, mid_y = coords[0].mean(), coords[1].mean()
+    # Per Opta coordinates, this will place the center of the constellation in
+    # the middle of the attacking half
+    target_x, target_y = 75, 50
+
+    # Data for rescaling
+    x_range = coords[0].max() - coords[0].min()
+    y_range = coords[1].max() - coords[1].min()
+    max_range = max(x_range, y_range)
+    target_range = 20
+
+    print(f'Moving {constellation_data["name"].unique()} from {mid_x:.2f} to {target_x}, rescaling by {target_range/max_range:.2f}')
+
+    coords_recentered = geometry.apply_transformation(
+        coords,
+        angle=0,
+        dx=target_x-mid_x,
+        dy=target_y-mid_y,
+        log_scale=0, #np.log(target_range/max_range),
     )
-    wrangled['x'] = xy['x']
-    wrangled['y'] = xy['y']
 
-    return wrangled
+    wrangled[['x', 'y']] = coords_recentered.transpose()
+
+    # In the constellations data, each record refers to a link between two stars
+    # (in the constellation visualisation). So, some stars are duplicated if they are
+    # linked to multiple opther stars.
+    # As a result, we separate and store the links and individual stars separately
+    links = wrangled.copy()
+    # Links are determined by their weight; all other columns are constant for each
+    # star. Thus, each star can be identified by its coordinates, so simply taking the
+    # distinct rows without the weight column returns the stars
+    stars = wrangled.drop(['weight'], axis='columns').drop_duplicates()
+
+    return links, stars
 
 
 def eqpole(long, lat, southpole=False):
@@ -105,7 +143,7 @@ def eqpole(long, lat, southpole=False):
 
     Adapted from astrolibR package, available under GPL v2.
     """
-    radeg = 180/math.pi
+    radeg = 180/np.pi
 
     if southpole:
         l1 = -long/radeg
@@ -114,10 +152,10 @@ def eqpole(long, lat, southpole=False):
         l1 = long/radeg
         b1 = lat/radeg
 
-    sq = max(2 * (1 - math.sin(b1)), 0)
-    r = 18 * 3.53553391 * math.sqrt(sq)
-    x = r*math.cos(l1)
-    y = r*math.sin(l1)
+    sq = max(2 * (1 - np.sin(b1)), 0)
+    r = 18 * 3.53553391 * np.sqrt(sq)
+    x = r*np.cos(l1)
+    y = r*np.sin(l1)
 
     return {'x': x, 'y': y}
 

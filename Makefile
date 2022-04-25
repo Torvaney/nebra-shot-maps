@@ -7,11 +7,13 @@ PYTHON_VENV ?= venv
 data/shots.csv:
 	@echo "TODO"
 
-data/constellations.csv: data/SnT_constellations.txt data/constellation_names.eng.fab src/python/parse_constellations.py
+# Creates links and stars for each constellation
+.PHONY: constellations
+constellations: data/SnT_constellations.txt data/constellation_names.eng.fab src/python/parse_constellations.py
 	$(PYTHON_VENV)/bin/python src/python/parse_constellations.py \
 		data/SnT_constellations.txt \
-		data/constellation_names.eng.fab > \
-		$@
+		data/constellation_names.eng.fab \
+		data/constellations/
 
 data/SnT_constellations.txt:
 	wget \
@@ -28,7 +30,8 @@ data/constellation_names.eng.fab:
 
 .PHONY: clean
 clean:
-	rm data/*
+	rm -f data/shots.csv data/SnT_constellations.txt data/constellation_names.eng.fab
+	rm -rf data/constellations/**/*.csv
 
 .PHONY: env
 env:
@@ -36,3 +39,7 @@ env:
 	$(PYTHON_VENV)/bin/pip install --upgrade pip
 	$(PYTHON_VENV)/bin/pip install -r requirements.txt
 	@echo "renv"
+
+.PHONY: test
+test:
+	$(PYTHON_VENV)/bin/python pytest
