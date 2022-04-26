@@ -9,13 +9,6 @@ plot_stars <- function(stars, links) {
   links %>%
     mutate(group = cumsum(weight != lag(weight, default = 0))) %>%
     ggplot(aes(x = x, y = y)) +
-
-    # ggsoccer::annotate_pitch(
-    #     colour = "#5e5e5e",
-    #     fill = "black",
-    #     goals = ggsoccer::goals_strip
-    # ) +
-
     geom_path(
       aes(group = group),
       colour = colours$link,
@@ -25,7 +18,6 @@ plot_stars <- function(stars, links) {
     geom_point(
       aes(size = exp(mag)),
       colour = "cornsilk",
-      fill = "white",
       data = stars
     ) +
     scale_size_continuous(limits = c(0, exp(7)), range = c(1, 7)) +
@@ -33,4 +25,9 @@ plot_stars <- function(stars, links) {
 }
 
 plot_stars(stars, links) %>%
-  ggsave(here::here("data", "constellations", constellation, "stars.png"), plot = .)
+  ggsave(
+    here::here("data", "constellations", constellation, "stars.png"),
+    plot = .,
+    width = 6,
+    height = 6*aspect_ratio
+  )
