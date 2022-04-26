@@ -14,13 +14,15 @@ plot_shots <- function(data) {
         goals  = goals_strip
     ) +
     geom_point(
-      shape = 21,
       colour = "cornsilk",
-      fill = "white",
       size = 3
     ) +
     theme_common()
 }
 
 plot_shots(data) %>%
-  ggsave(here::here("data", "constellations", constellation, "shots.png"), plot = .)
+  ggsave(here::here("data", "constellations", constellation, "shots.png"),
+    plot = .,
+    width = 6,
+    height = 6*aspect_ratio
+  )
