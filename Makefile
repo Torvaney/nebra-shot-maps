@@ -1,7 +1,31 @@
 PYTHON_VENV ?= venv
 
+CONSTELLATIONS = $(shell ls data/*/)
+
+
+.PHONY: all
+all: data
+	$(MAKE) $(CONSTELLATIONS)
+
+# MATCHING
+
+# TODO: work out how to adequately model dependencies here
+$(CONSTELLATIONS):
+	$(PYTHON_VENV)/bin/python src/python/match_constellation.py \
+		data/shots.csv \
+		data/constellations/$@
+	Rscript src/R/plot_constellation.R $@
+	Rscript src/R/plot_shots.R $@
+	if [ -f data/constellations/$@/stars.png ]; then \
+		convert data/constellations/$@/stars.png -trim -fuzz 5% -transparent white data/constellations/$@/stars.png; \
+		convert data/constellations/$@/shots.png -trim -fuzz 5% -transparent white data/constellations/$@/shots.png; \
+	fi
+
 
 # DATA
+
+.PHONY: data
+data: data/shots.csv constellations data/SnT_constellations.txt data/constellation_names.eng.fab
 
 # Fetch from db
 data/shots.csv:
@@ -31,7 +55,7 @@ data/constellation_names.eng.fab:
 .PHONY: clean
 clean:
 	rm -f data/shots.csv data/SnT_constellations.txt data/constellation_names.eng.fab
-	rm -rf data/constellations/**/*.csv
+	rm -rf data/constellations/**/*.{csv,json,png}
 
 .PHONY: env
 env:
@@ -42,4 +66,4 @@ env:
 
 .PHONY: test
 test:
-	$(PYTHON_VENV)/bin/python pytest
+	$(PYTHON_VENV)/bin/pytest
