@@ -34,6 +34,7 @@ data/shots.csv:
 # Creates links and stars for each constellation
 .PHONY: constellations
 constellations: data/SnT_constellations.txt data/constellation_names.eng.fab src/python/parse_constellations.py
+	mkdir -p data/constellations/
 	$(PYTHON_VENV)/bin/python src/python/parse_constellations.py \
 		data/SnT_constellations.txt \
 		data/constellation_names.eng.fab \
