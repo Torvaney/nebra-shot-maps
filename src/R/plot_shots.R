@@ -3,7 +3,7 @@ library(ggsoccer)
 source(here::here("src", "R", "common.R"))
 
 constellation <- parse_args()
-data <- read_csv(here::here("data", "constellations", constellation, "shots.csv"))
+data <- read_csv(here::here("data", "constellations", constellation, "shots.csv"), col_types = shot_cols)
 
 plot_shots <- function(data) {
   data %>%

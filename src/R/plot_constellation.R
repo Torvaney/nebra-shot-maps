@@ -2,8 +2,8 @@ suppressPackageStartupMessages(library(tidyverse))
 source(here::here("src", "R", "common.R"))
 
 constellation <- parse_args()
-stars <- read_csv(here::here("data", "constellations", constellation, "stars_transformed.csv"))
-links <- read_csv(here::here("data", "constellations", constellation, "links_transformed.csv"))
+stars <- read_csv(here::here("data", "constellations", constellation, "stars_transformed.csv"), col_types = star_cols)
+links <- read_csv(here::here("data", "constellations", constellation, "links_transformed.csv"), col_types = star_cols)
 
 plot_stars <- function(stars, links) {
   links %>%
