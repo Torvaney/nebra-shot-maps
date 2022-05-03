@@ -17,7 +17,7 @@ plot_stars <- function(stars, links) {
     ) +
     geom_point(
       aes(size = exp(mag)),
-      colour = "cornsilk",
+      colour = colours$star,
       data = stars
     ) +
     scale_size_continuous(limits = c(0, exp(7)), range = c(1, 7)) +
