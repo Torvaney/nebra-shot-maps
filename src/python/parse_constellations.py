@@ -87,11 +87,18 @@ def parse_names(lines):
 def wrangle_constellation(constellation_data):
     wrangled = constellation_data.copy()
 
-    # Add x,y coordinates using equal-area polar projection
-    ra_degrees = constellation_data['ra']*15
-    xy = [eqpole(ra, dec) for ra, dec in zip(ra_degrees, constellation_data['dec'])]
-    wrangled['raw_x'] = [x['x'] for x in xy]
-    wrangled['raw_y'] = [x['y'] for x in xy]
+    # Add raw x,y coordinates from orthographic projection, centered around
+    # the constellation's center of "mass" (i.e. average position of constituent
+    # stars)
+    # NB: Right-ascension is stored in hours - to get degrees, we multiply by 15
+    wrangled['ra_radians'] = degrees_to_radians(wrangled['ra']*15)
+    wrangled['dec_radians'] = degrees_to_radians(wrangled['dec'])
+    wrangled['raw_x'], wrangled['raw_y'] = orthographic_projection(
+        lat=wrangled['dec_radians'],
+        long=wrangled['ra_radians'],
+        lat_origin=wrangled['dec_radians'].mean(),
+        long_origin=wrangled['ra_radians'].mean(),
+    )
 
     # Since we don't actually care about the absolute xy coordinates,
     # we recenter them to be roughly similar location and scale to shots.
@@ -116,7 +123,7 @@ def wrangle_constellation(constellation_data):
         angle=0,
         dx=target_x-mid_x,
         dy=target_y-mid_y,
-        log_scale=0, #np.log(target_range/max_range),
+        log_scale=np.log(target_range/max_range),
     )
 
     wrangled[['x', 'y']] = coords_recentered.transpose()
@@ -134,28 +141,18 @@ def wrangle_constellation(constellation_data):
     return links, stars
 
 
-def eqpole(long, lat, southpole=False):
+def degrees_to_radians(d):
+    return d*np.pi/180
+
+
+def orthographic_projection(long, lat, long_origin=0, lat_origin=0):
     """
-    Convert Right Ascension and declination to X,Y using an equal-area polar
-    projection.
-
-    Adapted from astrolibR package, available under GPL v2.
+    Project points onto cartesian plane using the orthographic projection,
+    assuming a unit sphere (radius = 1).
     """
-    radeg = 180/np.pi
-
-    if southpole:
-        l1 = -long/radeg
-        b1 = -lat/radeg
-    else:
-        l1 = long/radeg
-        b1 = lat/radeg
-
-    sq = max(2 * (1 - np.sin(b1)), 0)
-    r = 18 * 3.53553391 * np.sqrt(sq)
-    x = r*np.cos(l1)
-    y = r*np.sin(l1)
-
-    return {'x': x, 'y': y}
+    x = np.cos(lat)*np.sin(long - long_origin)
+    y = np.cos(lat_origin)*np.sin(lat) - np.sin(lat_origin)*np.cos(lat)*np.cos(long - long_origin)
+    return x, y
 
 
 if __name__ == '__main__':
