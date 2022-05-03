@@ -14,7 +14,7 @@ plot_shots <- function(data) {
         goals  = goals_strip
     ) +
     geom_point(
-      colour = "cornsilk",
+      colour = colours$star,
       size = 3
     ) +
     theme_common()

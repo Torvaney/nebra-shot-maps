@@ -3,7 +3,8 @@ suppressPackageStartupMessages(library(tidyverse))
 
 colours <- list(
     nightsky = "#0b1026",
-    link     = "#5e5e5e"
+    link     = "#5e5e5e",
+    star     = "cornsilk"
 )
 
 parse_args <- function() {
