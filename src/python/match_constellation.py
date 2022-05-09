@@ -6,10 +6,10 @@ import json
 import pathlib
 
 import pandas as pd
-import scipy.optimize as op
 import numpy as np
 import tqdm
 import typer
+from scipy import optimize as op, stats
 
 import geometry
 
@@ -23,7 +23,7 @@ def find_best_transformation(shots, stars, similarity):
     """
     result = op.minimize(
         lambda x: evaluate_match(shots, stars, *x, similarity=similarity),
-        x0=[0, 0, 0, 0]
+        x0=[0, 0, 0, 0],
     )
     return result
 
@@ -67,6 +67,33 @@ def euclidean_similarity(coords1, coords2):
     mean_dist = cost_matrix[sol_rows, sol_cols].mean()
     return mean_dist
 
+
+@register_similarity('gaussian')
+def gaussian_similarity(coords1, coords2):
+    # Create a set of gaussians for each point in coords1 and find the total density
+    # of all of those distributions for each point in coords2
+    sigma = 0.1
+    cov = sigma*np.identity(2)
+    total_activation = 0
+    n_coords = coords1.shape[1]
+    for i1 in range(n_coords):
+        # NOTE: the nested loop is ugly BUT it is far more performant than (e.g.)
+        # itertools.product, because instantiating the scipy distribution
+        # is very slow. Creating a frozen distribution like this, and using that for
+        # each pdf is approx. 3-4x faster
+        distribution = stats.multivariate_normal(mean=coords1[:, i1], cov=cov)
+        for i2 in range(n_coords):
+            total_activation += distribution.pdf(coords2[:, i2])
+    return -total_activation
+
+
+@register_similarity('composite')
+def composite_similarity(coords1, coords2):
+    mse_blur = gaussian_similarity(coords1, coords2)
+    mse_euc = euclidean_similarity(coords1, coords2)
+    return mse_blur + mse_euc
+
+
 # Create an enum for the sake of the Typer CLI
 # Using an enum (with string values) as the argument type allows Typer to infer
 # what the valid inputs are for the similarity argument
@@ -74,6 +101,7 @@ def euclidean_similarity(coords1, coords2):
 # simpler way at the cost of a minor bit of repetition, which may be preferable...
 Similarity = enum.Enum('Similarity', {k: k for k in SIMILARITY_FUNCTIONS.keys()})
 Similarity.func = lambda self, c1, c2: SIMILARITY_FUNCTIONS[self.name](c1, c2)
+
 
 # Main CLI function
 
@@ -112,12 +140,16 @@ def main(
             stars[['x', 'y']].values.transpose(),
             similarity=similarity.func
         )
+        res['gaussian_similarity'] = gaussian_similarity(
+            game_shots[['x', 'y']].values.transpose(),
+            stars[['x', 'y']].values.transpose()
+        )
         transformations[(game_id, team_id)] = res
 
     typer.echo('Done! Saving output...')
 
     # Extract the best match and store the result
-    game_id, team_id = min(transformations, key=lambda x: transformations[x]['fun'])
+    game_id, team_id = min(transformations, key=lambda x: transformations[x]['gaussian_similarity'])
     match_result = transformations[(game_id, team_id)]
     match_metadata = {
         'constellation': constellation,

@@ -13,7 +13,8 @@ all: data
 $(CONSTELLATIONS):
 	$(PYTHON_VENV)/bin/python src/python/match_constellation.py \
 		data/shots.csv \
-		data/constellations/$@
+		data/constellations/$@ \
+		--similarity euclidean
 	Rscript src/R/plot_constellation.R $@
 	Rscript src/R/plot_shots.R $@
 	if [ -f data/constellations/$@/stars.png ]; then \
