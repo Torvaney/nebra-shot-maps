@@ -30,7 +30,11 @@ data: data/shots.csv constellations data/SnT_constellations.txt data/constellati
 
 # Fetch from db
 data/shots.csv:
-	@echo "TODO"
+	@if [ ! -f data/shots.csv ]; then \
+		echo "You need to add a 'shots.csv' file to the 'data' folder!"; \
+		exit 1; \
+	fi
+
 
 # Creates links and stars for each constellation
 .PHONY: constellations
