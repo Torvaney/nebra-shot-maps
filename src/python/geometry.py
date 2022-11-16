@@ -30,11 +30,15 @@ def apply_transformation(coords, angle, dx, dy, log_scale, pivot=None):
     else:
         mid_x = coords[0].mean()
         mid_y = coords[1].mean()
+
+    # Avoid overflow error in np.exp
+    log_scale_truncated = min(log_scale, 100)
+
     return apply(
         coords,
         translation(-mid_x, -mid_y),  # translate to origin for scaling and rotation
         rotation(angle),
-        scaling(np.exp(log_scale)),
+        scaling(np.exp(log_scale_truncated)), # Handle
         translation(mid_x, mid_y),    # translate back (from origin)
         translation(dx, dy),          # translate to final position
     )
