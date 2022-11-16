@@ -24,6 +24,7 @@ def find_best_transformation(shots, stars, similarity):
     result = op.minimize(
         lambda x: evaluate_match(shots, stars, *x, similarity=similarity),
         x0=[0, 0, 0, 0],
+        bounds=[(-100, 100), (-100, 100), (-np.pi, np.pi), (-200, 200)]
     )
     return result
 
@@ -140,22 +141,18 @@ def main(
             stars[['x', 'y']].values.transpose(),
             similarity=similarity.func
         )
-        res['gaussian_similarity'] = gaussian_similarity(
-            game_shots[['x', 'y']].values.transpose(),
-            stars[['x', 'y']].values.transpose()
-        )
         transformations[(game_id, team_id)] = res
 
     typer.echo('Done! Saving output...')
 
     # Extract the best match and store the result
-    game_id, team_id = min(transformations, key=lambda x: transformations[x]['gaussian_similarity'])
+    game_id, team_id = min(transformations, key=lambda x: transformations[x]['fun'])
     match_result = transformations[(game_id, team_id)]
     match_metadata = {
         'constellation': constellation,
         'game_id': game_id,
         'team_id': team_id,
-        'squared_distance': match_result['fun'],
+        'distance': match_result['fun'],
         'transformations': list(match_result['x'])
     }
 
