@@ -1,4 +1,5 @@
 PYTHON_VENV ?= venv
+SIMILARITY_FUNCTION ?= euclidean
 
 CONSTELLATIONS = $(shell ls data/*/)
 
@@ -14,7 +15,7 @@ $(CONSTELLATIONS):
 	$(PYTHON_VENV)/bin/python src/python/match_constellation.py \
 		data/shots.csv \
 		data/constellations/$@ \
-		--similarity euclidean
+		--similarity $(SIMILARITY_FUNCTION)
 	Rscript src/R/plot_constellation.R $@
 	Rscript src/R/plot_shots.R $@
 	if [ -f data/constellations/$@/stars.png ]; then \
