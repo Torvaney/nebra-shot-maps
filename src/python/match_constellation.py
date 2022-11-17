@@ -31,7 +31,17 @@ def find_best_transformation(shots, stars, similarity):
 
 def evaluate_match(coords1, coords2, angle, dx, dy, log_scale, similarity):
     coords2_transformed = geometry.apply_transformation(coords2, angle, dx, dy, log_scale)
-    return similarity(coords1, coords2_transformed)
+    return similarity(coords1, coords2_transformed) + penalise_tiny_transformations(coords2_transformed)
+
+
+def penalise_tiny_transformations(coords):
+    # Very basic, non-optimised penalty function
+    # Results generally run fine without it, but a few
+    # constellations get nicer matches with it
+    x_range = abs(coords[0].max() - coords[0].min())
+    y_range = abs(coords[0].max() - coords[0].min())
+    average_range = x_range + y_range / 2
+    return np.exp(-5*average_range + 2)
 
 
 # Similarity scores
@@ -88,13 +98,6 @@ def gaussian_similarity(coords1, coords2):
     return -total_activation
 
 
-@register_similarity('composite')
-def composite_similarity(coords1, coords2):
-    mse_blur = gaussian_similarity(coords1, coords2)
-    mse_euc = euclidean_similarity(coords1, coords2)
-    return mse_blur + mse_euc
-
-
 # Create an enum for the sake of the Typer CLI
 # Using an enum (with string values) as the argument type allows Typer to infer
 # what the valid inputs are for the similarity argument
@@ -119,14 +122,15 @@ def main(
     stars = pd.read_csv(constellation_path/'stars.csv')
     links = pd.read_csv(constellation_path/'links.csv')
 
-    if len(stars) < min_stars:
+    n_stars = len(stars)
+    if n_stars < min_stars:
         typer.echo(f'{constellation} has fewer than {min_stars} shots. Skipping.')
         sys.exit(0)
 
     typer.echo('Counting shots for each game...')
     shot_counts = shots[['game_id', 'team_id']].value_counts()
-    valid_games = shot_counts.loc[lambda n: n == len(stars)]
-    typer.echo(f'Found {len(valid_games)} possible matches (with {len(stars)} shots)...')
+    valid_games = shot_counts.loc[lambda n: n == n_stars]
+    typer.echo(f'Found {len(valid_games)} possible matches (with {n_stars} shots)...')
 
     # For each valid set of match shots, evaluate the best possible match
     typer.echo(f'Matching {constellation} to shot-map, using {similarity.name} similarity...')
@@ -153,6 +157,7 @@ def main(
         'game_id': game_id,
         'team_id': team_id,
         'distance': match_result['fun'],
+        'mean_distance': match_result['fun']/n_stars,
         'transformations': list(match_result['x'])
     }
 
