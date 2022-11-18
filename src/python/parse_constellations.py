@@ -13,6 +13,9 @@ import pandas as pd
 import geometry
 
 
+MIN_STARS = 5
+
+
 def main(snt: typer.FileText, names: typer.FileText, output_dir: pathlib.Path):
     # load constellations data and names
     constellations = pd.DataFrame(parse_snt(snt))
@@ -20,6 +23,10 @@ def main(snt: typer.FileText, names: typer.FileText, output_dir: pathlib.Path):
 
     # Join constellations to names & add xy
     for constellation_abbr, constellation_data in constellations.groupby('constellation'):
+        if len(constellation_data) < MIN_STARS:
+            typer.echo(f'{constellation_abbr} has fewer than {MIN_STARS} shots. Skipping.')
+            continue
+
         full_name = name_lookup[constellation_abbr]
 
         # Add metadata, add coordinates, separate links and stars
