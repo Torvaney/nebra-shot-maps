@@ -1,5 +1,6 @@
-typer
-numpy
-pytest
-hypothesis
+typer==0.4.1
+numpy==1.21.6
+pandas==1.3.5
+pytest==7.1.1
+hypothesis==6.44.0
 hypothesis[numpy]
