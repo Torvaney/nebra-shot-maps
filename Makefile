@@ -6,28 +6,34 @@ CONSTELLATIONS = $(shell ls data/*/)
 
 .PHONY: all
 all: data
-	$(MAKE) $(CONSTELLATIONS)
+	@$(MAKE) $(patsubst %,data/constellations/%/match.json,$(CONSTELLATIONS))
 
 # MATCHING
 
-# TODO: work out how to adequately model dependencies here
-$(CONSTELLATIONS):
-	$(PYTHON_VENV)/bin/python src/python/match_constellation.py \
+data/constellations/%/match.json: data/constellations/%/stars.csv
+	@$(PYTHON_VENV)/bin/python src/python/match_constellation.py \
 		data/shots.csv \
-		data/constellations/$@ \
+		data/constellations/$* \
 		--similarity $(SIMILARITY_FUNCTION)
-	Rscript src/R/plot_constellation.R $@
-	Rscript src/R/plot_shots.R $@
-	if [ -f data/constellations/$@/stars.png ]; then \
-		convert data/constellations/$@/stars.png -trim -fuzz 5% -transparent white data/constellations/$@/stars.png; \
-		convert data/constellations/$@/shots.png -trim -fuzz 5% -transparent white data/constellations/$@/shots.png; \
+	@Rscript src/R/plot_constellation.R $*
+	@Rscript src/R/plot_shots.R $*
+	@if [ -f data/constellations/$*/stars.png ]; then \
+		convert data/constellations/$*/stars.png -trim -fuzz 5% -transparent white data/constellations/$*/stars.png; \
+		convert data/constellations/$*/shots.png -trim -fuzz 5% -transparent white data/constellations/$*/shots.png; \
 	fi
+
+# Stars rule performs the matching and generates images, too
+data/constellations/%/stars.png: data/constellations/%/match.json
+
+data/constellations/%/shots.png: data/constellations/%/match.json
 
 
 # DATA
 
 .PHONY: data
-data: data/shots.csv constellations data/SnT_constellations.txt data/constellation_names.eng.fab
+data: data/shots.csv data/SnT_constellations.txt data/constellation_names.eng.fab
+data: $(patsubst %,data/constellations/%/stars.csv,$(CONSTELLATIONS))
+data: $(patsubst %,data/constellations/%/links.csv,$(CONSTELLATIONS))
 
 # Fetch from db
 data/shots.csv:
@@ -39,12 +45,17 @@ data/shots.csv:
 
 # Creates links and stars for each constellation
 .PHONY: constellations
-constellations: data/SnT_constellations.txt data/constellation_names.eng.fab src/python/parse_constellations.py
+constellations: data/SnT_constellations.txt data/constellation_names.eng.fab
 	mkdir -p data/constellations/
 	$(PYTHON_VENV)/bin/python src/python/parse_constellations.py \
 		data/SnT_constellations.txt \
 		data/constellation_names.eng.fab \
 		data/constellations/
+
+data/constellations/%/stars.csv: constellations
+
+data/constellations/%/links.csv: constellations
+
 
 data/SnT_constellations.txt:
 	wget \
@@ -61,7 +72,7 @@ data/constellation_names.eng.fab:
 
 .PHONY: clean
 clean:
-	rm -f data/shots.csv data/SnT_constellations.txt data/constellation_names.eng.fab
+	rm -f  data/SnT_constellations.txt data/constellation_names.eng.fab
 	rm -rf data/constellations/**/*.{csv,json,png}
 
 .PHONY: env
@@ -69,7 +80,7 @@ env:
 	python -m venv $(PYTHON_VENV)
 	$(PYTHON_VENV)/bin/pip install --upgrade pip
 	$(PYTHON_VENV)/bin/pip install -r requirements.txt
-	@echo "renv"
+	@echo "TODO: renv"
 
 .PHONY: test
 test:
