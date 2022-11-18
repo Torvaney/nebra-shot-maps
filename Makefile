@@ -33,7 +33,7 @@ data/constellations/%/shots.png: data/constellations/%/match.json
 
 .PHONY: data
 data: data/shots.csv data/SnT_constellations.txt data/constellation_names.eng.fab
-	@$(MAKE) constellations
+	@$(MAKE) $(patsubst %,data/constellations/%/stars.csv,$(CONSTELLATIONS))
 
 # Fetch from db
 data/shots.csv:
