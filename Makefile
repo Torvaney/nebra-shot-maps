@@ -5,10 +5,48 @@ CONSTELLATIONS = $(shell ls data/*/)
 
 
 .PHONY: all
-all: data
-	@$(MAKE) $(patsubst %,data/constellations/%/match.json,$(CONSTELLATIONS))
+all: html
+
+
+
+# HTML
+
+.PHONY: html
+html: matching
+html: html/static/css/styles.css html/index.html
+html:
+	$(MAKE) $(patsubst %,html/static/img/%/shots.png,$(CONSTELLATIONS))
+	$(MAKE) $(patsubst %,html/static/img/%/stars.png,$(CONSTELLATIONS))
+
+
+html/static/img/%/shots.png: data/constellations/%/shots.png
+	mkdir -p html/static/img/$*
+	cp $< $@
+
+html/static/img/%/stars.png: data/constellations/%/stars.png
+	mkdir -p html/static/img/$*
+	cp $< $@
+
+
+html/static/css/styles.css:
+	mkdir -p html/static/css
+	cp src/css/styles.css html/static/css/styles.css
+
+
+html/index.html: data html/static/css/styles.css $(patsubst %,data/constellations/%/match.json,$(CONSTELLATIONS))
+	$(PYTHON_VENV)/bin/python src/python/generate_webpage.py \
+		data/constellations \
+		src/html \
+		html
+
+
 
 # MATCHING
+
+.PHONY: matching
+matching: data
+	@$(MAKE) $(patsubst %,data/constellations/%/match.json,$(CONSTELLATIONS))
+
 
 data/constellations/%/match.json: data/constellations/%/stars.csv
 	@$(PYTHON_VENV)/bin/python src/python/match_constellation.py \

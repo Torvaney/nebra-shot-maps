@@ -1,0 +1,47 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Nebra Shot Maps</title>
+  <meta name="description" content="Matching soccer shot-maps to constellations">
+  <meta name="author" content="SitePoint">
+
+  <meta property="og:title" content="A Basic HTML5 Template">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://torvaney.github.io/projects/nebra-shot-maps">
+  <meta property="og:description" content="Matching soccer shot-maps to constellations">
+  <!-- TODO -->
+  <meta property="og:image" content="static/img/Ara/shots.png">
+
+  <link rel="stylesheet" href="static/css/styles.css?v=1.0">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+  <!-- your content here... -->
+  <h1>Nebra Shot Maps</h1>
+  <p>Matching each constellation to a football (soccer) shot map.</p>
+  <p>View the code <a href="https://github.com/Torvaney/nebra-shot-maps">on github</a></p>
+
+  <div class="column">
+    {% for constellation in constellations %}
+
+    <h2>{{ constellation.name }}</h2>
+    <p>{{ constellation.team }} ({{ constellation.game_label }}, {{ constellation.date }})</p>
+    <div class="row">
+      <img src="static/img/{{ constellation.abbreviation }}/stars.png" width="50%">
+      <img src="static/img/{{ constellation.abbreviation }}/shots.png" width="50%">
+    </div>
+
+    {% endfor %}
+  </div>
+</body>
+</html>
