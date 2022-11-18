@@ -28,12 +28,12 @@ data/constellations/%/stars.png: data/constellations/%/match.json
 data/constellations/%/shots.png: data/constellations/%/match.json
 
 
+
 # DATA
 
 .PHONY: data
 data: data/shots.csv data/SnT_constellations.txt data/constellation_names.eng.fab
-data: $(patsubst %,data/constellations/%/stars.csv,$(CONSTELLATIONS))
-data: $(patsubst %,data/constellations/%/links.csv,$(CONSTELLATIONS))
+	@$(MAKE) constellations
 
 # Fetch from db
 data/shots.csv:
@@ -68,12 +68,14 @@ data/constellation_names.eng.fab:
 		-O data/constellation_names.eng.fab
 
 
+
 # DEV
 
 .PHONY: clean
 clean:
 	rm -f  data/SnT_constellations.txt data/constellation_names.eng.fab
-	rm -rf data/constellations/**/*.{csv,json,png}
+	rm -rf data/constellations/*
+
 
 .PHONY: env
 env:
@@ -81,6 +83,7 @@ env:
 	$(PYTHON_VENV)/bin/pip install --upgrade pip
 	$(PYTHON_VENV)/bin/pip install -r requirements.txt
 	@echo "TODO: renv"
+
 
 .PHONY: test
 test:
