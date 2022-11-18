@@ -115,17 +115,12 @@ def main(
     similarity: Similarity = typer.Option('euclidean', show_choices=True)
 ):
     constellation = constellation_path.name
-    min_stars = 5
 
     # Load the shots and constellation data
     shots = pd.read_csv(shots)
     stars = pd.read_csv(constellation_path/'stars.csv')
     links = pd.read_csv(constellation_path/'links.csv')
-
     n_stars = len(stars)
-    if n_stars < min_stars:
-        typer.echo(f'{constellation} has fewer than {min_stars} shots. Skipping.')
-        sys.exit(0)
 
     typer.echo('Counting shots for each game...')
     shot_counts = shots[['game_id', 'team_id']].value_counts()
