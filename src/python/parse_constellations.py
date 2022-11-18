@@ -23,15 +23,15 @@ def main(snt: typer.FileText, names: typer.FileText, output_dir: pathlib.Path):
 
     # Join constellations to names & add xy
     for constellation_abbr, constellation_data in constellations.groupby('constellation'):
-        if len(constellation_data) < MIN_STARS:
-            typer.echo(f'{constellation_abbr} has fewer than {MIN_STARS} shots. Skipping.')
-            continue
-
         full_name = name_lookup[constellation_abbr]
 
         # Add metadata, add coordinates, separate links and stars
         constellation_data['name'] = full_name
         links, stars = wrangle_constellation(constellation_data)
+
+        if len(stars) < MIN_STARS:
+            typer.echo(f'{constellation_abbr} has fewer than {MIN_STARS} shots. Skipping.')
+            continue
 
         # Save data
         constellation_dir = output_dir/constellation_abbr

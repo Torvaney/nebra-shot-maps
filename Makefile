@@ -32,8 +32,7 @@ data/constellations/%/shots.png: data/constellations/%/match.json
 # DATA
 
 .PHONY: data
-data: data/shots.csv data/SnT_constellations.txt data/constellation_names.eng.fab
-	@$(MAKE) $(patsubst %,data/constellations/%/stars.csv,$(CONSTELLATIONS))
+data: data/shots.csv data/SnT_constellations.txt data/constellation_names.eng.fab data/constellations
 
 # Fetch from db
 data/shots.csv:
@@ -43,18 +42,19 @@ data/shots.csv:
 	fi
 
 
-# Creates links and stars for each constellation
-.PHONY: constellations
-constellations: data/SnT_constellations.txt data/constellation_names.eng.fab
+# Creates links and stars for each constellation (using the directory to inform
+# make of how up-to-date they are)
+data/constellations: data/SnT_constellations.txt data/constellation_names.eng.fab
 	mkdir -p data/constellations/
 	$(PYTHON_VENV)/bin/python src/python/parse_constellations.py \
 		data/SnT_constellations.txt \
 		data/constellation_names.eng.fab \
 		data/constellations/
+	touch data/constellations
 
-data/constellations/%/stars.csv: constellations
+data/constellations/%/stars.csv: data/constellations
 
-data/constellations/%/links.csv: constellations
+data/constellations/%/links.csv: data/constellations
 
 
 data/SnT_constellations.txt:
