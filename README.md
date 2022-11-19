@@ -8,7 +8,7 @@ Run `make all` to run the matching algorithm for all constellations and view the
 
 ![](README/example.png)
 
-There are a few more examples [on Twitter](https://twitter.com/Torvaney/status/1518993765830176770).
+The full results are available [here](https://torvaney.github.io/projects/nebra/)
 
 
 ## Requirements
