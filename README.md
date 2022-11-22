@@ -4,6 +4,8 @@ Matching constellations to shot maps.
 
 Run `make all` to run the matching algorithm for all constellations and view the results at `data/constellations/{constellation}/...`, after making sure you've satisfied the **requirements** (listed below).
 
+Alternatively, you can download a sample of matched constellations and shot maps [from the releases](https://github.com/Torvaney/nebra-shot-maps/releases/tag/data).
+
 ## Results
 
 ![](README/example.png)
